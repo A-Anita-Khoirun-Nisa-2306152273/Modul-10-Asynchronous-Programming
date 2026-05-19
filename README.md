@@ -8,9 +8,9 @@ howdy!
 done!
 
 ```
-![With Drop](image.png)
+![With Drop](assets/image.png)
 
-![With Drop](image1.png)
+![With Drop](assets/image1.png)
 
 #### Analisis dan Penjelasan
 Mengapa urutan keluaran yang muncul di terminal menjadi `hey hey` -> `howdy!` -> `done!`? Berikut adalah analisis fungsional mengenai alur eksekusi asinkronus tersebut:
@@ -39,4 +39,22 @@ Program akan mencetak teks dari *multiple spawn* yang dijalankan, namun setelah 
    
    Ketika semua *task* yang sudah terlanjur mengantre selesai dieksekusi oleh `Executor` dan instansi `spawner` sudah di-`drop`, saluran komunikasi (*channel*) otomatis akan menutup. Begitu *channel* tutup, fungsi `ready_queue.recv()` akan mengembalikan *error* yang menandakan antrean kosong permanen, sehingga perulangan `while let` pada `Executor` dapat berhenti dengan bersih dan program selesai berjalan.
 
-![With Drop](image2.png)
+![With Drop](assets/image2.png)
+
+## Tutorial 2: Broadcast Chat
+### Eksperimen 2.1: Original Code, and How it Run
+#### Hasil Eksekusi Terminal
+#### Analisis dan Penjelasan
+
+Program ini mengimplementasikan aplikasi *broadcast chat* berbasis protokol WebSocket menggunakan bahasa Rust dan pustaka asinkronus `tokio`. Terdapat dua komponen utama eksekusi, yaitu komponen `server` dan komponen `client`.
+
+Secara default, server berjalan dan mendengarkan koneksi masuk pada port `2000`. Setiap kali ada client baru yang terhubung, server akan menangani koneksinya secara asinkronus. Ketika salah satu client mengirimkan sebuah pesan teks, server akan menerima pesan tersebut dan memanfaatkaan mekanisme `broadcast channel` bawaan `tokio` untuk menyebarkan (*broadcast*) pesan tersebut ke seluruh client yang saat itu sedang terhubung, termasuk dikirimkan kembali ke sisi client pengirim itu sendiri.
+
+**Cara Menjalankan:**
+
+1. Jalankan komponen server utama: `cargo run --bin server`
+2. Buka terminal baru, jalankan komponen client pertama: `cargo run --bin client`
+3. Buka beberapa terminal baru lainnya untuk menambahkan client tambahan.
+
+![alt text](assets/image3.png)
+![alt text](assets/image4.png)
