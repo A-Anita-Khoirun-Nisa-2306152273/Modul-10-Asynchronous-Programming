@@ -128,3 +128,115 @@ Saat client mengirim pesan (misal: `"halo"`), server akan menangkapnya, mencetak
 
 ![alt text](assets/image7.png)
 ![alt text](assets/image8.png)
+
+# Tutorial 3 - WebChat
+
+## Experiment 3.1: Original Code
+
+### Deskripsi Tugas
+
+Eksperimen kali ini berfokus pada eksekusi kode awal (*original code*) dari YewChat, sebuah platform obrolan berbasis web (*browser*) yang dirancang menggunakan bahasa Rust melalui framework **Yew**. Berbeda dengan eksperimen pada modul sebelumnya yang beroperasi di lingkungan CLI/terminal, implementasi kali ini menyajikan antarmuka grafis obrolan (*graphical chat interface*) yang jauh lebih modern, interaktif, dan reaktif.
+
+Arsitektur sistem ini dibangun atas dua komponen utama yang saling terhubung:
+- **SimpleWebsocketServer**: Backend server berbasis Node.js yang bertugas menangani siklus hidup koneksi WebSocket serta mendistribusikan (*broadcast*) pesan antar pengguna yang aktif.
+- **YewChat**: Aplikasi frontend berbasis Rust yang dikompilasi menjadi dokumen biner *WebAssembly* (WASM) agar dapat dieksekusi secara optimal langsung di dalam browser.
+
+---
+
+### Penanganan Kendala Sinkronisasi Lingkungan (Setup)
+
+Dalam proses instalasi, ditemukan isu kompatibilitas di mana proyek YewChat masih mengandalkan pustaka `wasm-bindgen` versi lawas (0.2.45), sehingga memicu kegagalan kompilasi jika dijalankan menggunakan kompilator Rust *stable* terbaru. Guna mengatasi hambatan tersebut, diperlukan konfigurasi *toolchain* khusus dengan menurunkan versi kompiler ke Rust **1.77.0** selama proses pengerjaan YewChat berlangsung.
+
+```powershell
+rustup toolchain install 1.77.0
+rustup default 1.77.0
+
+```
+
+Setelah seluruh proses kompilasi dan pengujian selesai dilakukan, repositori lokal dapat dikembalikan ke konfigurasi standar agar tidak mengganggu fungsionalitas proyek Rust lainnya:
+
+```powershell
+rustup default stable
+
+```
+
+---
+
+### Prosedur Menjalankan Aplikasi
+
+#### Terminal 1 — Inisialisasi Backend WebSocket Server
+
+```powershell
+cd tutorial3-webchat\tutorial3-webchat-server
+npm i
+npm start
+
+```
+
+Log Keluaran Terminal:
+
+```
+Listening on port 8080
+
+```
+
+#### Terminal 2 — Kompilasi & Penayangan Frontend YewChat
+
+```powershell
+rustup default 1.77.0
+cd tutorial3-webchat\tutorial3-webchat
+npm i
+npm start
+
+```
+
+Log Keluaran Terminal:
+
+```
+[webpack-dev-server] Loopback: http://localhost:8000/
+
+```
+
+Setelah kedua komponen aktif, aplikasi dapat diakses dengan membuka alamat `http://localhost:8000` melalui browser.
+
+---
+
+### Mekanisme Kerja Sistem
+
+Sistem navigasi antarmuka pada aplikasi ini dikelola secara asinkronus oleh pustaka `yew_router` yang membagi alur menjadi dua segmen rute utama:
+
+* Rute `/` → Mengarah ke panel Autentikasi/Login
+* Rute `/chat` → Mengarah ke ruang obrolan (*Chat Room*)
+
+Alur pertukaran datanya dijabarkan sebagai berikut:
+
+1. Pengguna memuat alamat `http://localhost:8000` pada browser, lalu sistem akan menyajikan halaman utama (login).
+2. Pengguna memasukkan identitas berupa *username* unik dan menekan tombol aksi **GO CHATTING!**.
+3. Aplikasi web secara asinkronus mengirimkan muatan data registrasi menuju server backend dalam representasi objek JSON:
+```json
+{"messageType": "register", "data": "Anita"}
+
+```
+
+
+4. Server memproses muatan tersebut, mencatat sesi, dan mengirimkan balik daftar nama pengguna lain yang tengah berstatus *online*.
+5. Pengguna mengetikkan pesan teks pada area input yang disediakan, lalu mengirimkannya lewat soket jaringan.
+6. Server menangkap aliran data teks tersebut, kemudian menyebarkannya kembali (*broadcast*) ke setiap socket klien yang terdaftar di jaringan.
+7. Aplikasi pada sisi klien menerima sebaran pesan tersebut dan merendernya ke dalam panel obrolan secara *real-time*.
+
+Sinkronisasi data antar komponen internal framework Yew dijembatani oleh arsitektur `EventBus` dari pustaka `yew_agent`. Mekanisme ini memastikan setiap aliran data yang diterima dari protokol WebSocket dapat diteruskan ke komponen tampilan obrolan secara reaktif dan instan.
+
+---
+
+### Hasil Observasi Antarmuka
+
+* Panel autentikasi (login) berhasil dimuat dengan dominasi estetika visual bertema gelap (*dark mode*), dilengkapi kolom input teks nama serta tombol aksi **GO CHATTING!**.
+* Begitu proses login divalidasi, pengguna otomatis diarahkan ke ruang obrolan yang memuat bilah menu (*sidebar*) khusus bernama **Users** di sisi kiri layar.
+* Representasi visual berupa gambar profil (*avatar*) pengguna dibuat secara dinamis menggunakan integrasi layanan pihak ketiga, yaitu DiceBear API, yang mengolah nilai string *username* menjadi visual unik.
+* Setiap entitas pengguna yang terhubung membawa teks status bawaan bertuliskan **"Hi there!"** tepat di bawah baris nama mereka.
+* Seluruh pesan yang terkirim terstruktur dengan rapi di dalam komponen *chat box*, lengkap dengan penanda waktu, identitas nama pengirim, beserta ikon avatarnya.
+* Area input pengetikan pesan diletakkan secara ergonomis di batas bawah layar, berdampingan dengan tombol kirim berwujud lingkaran ikonik.
+
+
+![alt text](assets/image9.png)
+![alt text](assets/image10.png)
