@@ -237,6 +237,138 @@ Sinkronisasi data antar komponen internal framework Yew dijembatani oleh arsitek
 * Seluruh pesan yang terkirim terstruktur dengan rapi di dalam komponen *chat box*, lengkap dengan penanda waktu, identitas nama pengirim, beserta ikon avatarnya.
 * Area input pengetikan pesan diletakkan secara ergonomis di batas bawah layar, berdampingan dengan tombol kirim berwujud lingkaran ikonik.
 
-
-![alt text](assets/image9.png)
 ![alt text](assets/image10.png)
+![alt text](assets/image9.png)
+
+
+## Experiment 3.2: Add Some Creativity to the Webclient
+
+### Latar Belakang & Motivasi
+
+Kreativitas adalah salah satu kemampuan paling kritis untuk menghadapi era kecerdasan buatan di dunia kerja masa depan, sebagaimana diidentifikasi oleh *World Economic Forum* (WEF). Oleh karena itu, pada eksperimen ini dilakukan serangkaian peningkatan kreatif terhadap tampilan (*UI/UX*) aplikasi YewChat — tanpa mengubah logika bisnis atau arsitektur backend yang sudah ada.
+
+Tujuan utamanya adalah menghadirkan pengalaman pengguna (*user experience*) yang lebih modern, nyaman, dan ekspresif dibandingkan tampilan bawaan sebelumnya.
+
+---
+
+### Perubahan yang Dilakukan
+
+#### 1. Halaman Login — Redesign Total
+
+**Sebelum:** Layar kosong berwarna abu-abu gelap polos dengan satu form input biasa.
+
+**Sesudah:** Halaman login bertema *glassmorphism* dengan elemen-elemen berikut:
+
+| Elemen | Detail |
+|---|---|
+| **Background** | Gradient diagonal `indigo-950 → purple-900 → pink-900` |
+| **Card** | Efek kaca semi-transparan (`bg-opacity-10`, border putih tipis) |
+| **Logo** | Emoji 💬 berukuran besar sebagai identitas visual aplikasi |
+| **Judul** | *"YewChat"* — tipografi tebal dengan letter-spacing ketat |
+| **Tagline** | *"Where every conversation comes alive ✨"* |
+| **Input** | Ikon 👤 di sisi kiri, background semi-transparan, border fokus ungu |
+| **Tombol** | Gradient ungu dengan teks 🚀 *Start Chatting!*, status disabled yang jelas |
+| **Footer card** | Slogan *"Connect • Share • Express"* dan credit teknologi |
+
+#### 2. Halaman Chat — Dark Mode & Bubble Dua Sisi
+
+**Sebelum:** Semua pesan muncul di sisi kiri dengan bubble abu-abu polos, sidebar putih sederhana.
+
+**Sesudah:**
+
+**Sidebar (kiri):**
+- Gradient gelap `purple-950 → indigo-950` menggantikan sidebar abu-abu putih
+- Header sidebar dengan logo 💬 dan deskripsi *"Real-time WebSocket"*
+- Setiap pengguna online ditampilkan dengan:
+  - Avatar berukuran lebih besar dengan border ungu
+  - **Indikator hijau** (● Online) sebagai status aktif
+  - **Highlight khusus** untuk pengguna sendiri (`(you)` label + background berbeda)
+  - Counter jumlah pengguna online secara real-time
+
+**Area Chat (kanan):**
+- Background `gray-900` (full dark mode)
+- Header dengan badge **"Live"** berwarna hijau menandakan koneksi aktif
+- **Bubble pesan dua sisi:**
+  - Pesan sendiri → sisi **kanan**, bubble gradient `purple-600 → indigo-700`
+  - Pesan orang lain → sisi **kiri**, bubble `gray-700`
+- **Empty state** 👋 dengan pesan *"Be the first to say something!"* ketika belum ada pesan
+- **Enter key support** — tekan Enter untuk kirim pesan tanpa klik tombol
+- Area input dengan placeholder deskriptif dan hint GIF support
+
+#### 3. Peningkatan UX Teknis
+
+- Validasi input: tombol *Start Chatting!* hanya aktif jika username tidak kosong
+- Tombol kirim dengan animasi `active:scale-95` untuk feedback visual
+- Pesan kosong (hanya spasi) tidak dikirimkan ke server
+- Hint teks di bawah input menjelaskan cara pakai (*Enter to send • GIF support*)
+
+---
+
+### Perbandingan Visual
+
+#### Halaman Login
+
+| Sebelum | Sesudah |
+|---|---|
+| Background abu-abu gelap polos | Gradient indigo → purple → pink |
+| Tombol teks biasa "GO CHATTING!" | Tombol gradient ungu dengan ikon 🚀 |
+| Tidak ada identitas aplikasi | Logo 💬, judul, tagline, dan credit |
+
+#### Halaman Chat
+
+| Sebelum | Sesudah |
+|---|---|
+| Sidebar putih abu-abu | Sidebar gradient ungu gelap |
+| Semua bubble di sisi kiri | Bubble dua sisi (kiri/kanan) |
+| Status "Hi there!" statis | Indikator "● Online" dinamis |
+| Tidak ada empty state | Empty state 👋 yang informatif |
+| Hanya klik tombol untuk kirim | Enter key + klik tombol |
+
+---
+
+### Screenshot Hasil
+
+**Halaman Login (Tampilan Baru):**
+
+![Login Page](assets/login-new.png)
+
+**Halaman Chat — Empty State:**
+
+![Chat Empty State](assets/chat-empty.png)
+
+**Halaman Chat — Percakapan Aktif:**
+![Chat Active](assets/chat-active.png)
+
+### Cara Menjalankan
+
+**Terminal 1 — Backend WebSocket Server:**
+```powershell
+cd modul-10-webchat\webchat-server
+npm install
+npm run dev
+```
+
+Log keluaran:
+```
+Listening on port 8080
+```
+
+**Terminal 2 — Frontend YewChat:**
+```powershell
+cd modul-10-webchat\yewchat
+npm install
+npm start
+```
+
+Proses `npm start` akan otomatis:
+1. Menghapus folder `dist` dan `pkg` lama
+2. Menjalankan `wasm-pack build` untuk kompilasi Rust → WebAssembly (~30 detik)
+3. Menjalankan `webpack-dev-server` dan membuka browser di `http://localhost:8000`
+
+---
+
+### Refleksi Kreatif
+
+Proses redesign ini mengajarkan bahwa kreativitas dalam pemrograman bukan hanya soal menambahkan fitur baru, tetapi juga tentang **memperhatikan detail pengalaman pengguna** — mulai dari warna, tipografi, tata letak, hingga interaksi kecil seperti tombol Enter dan animasi.
+
+Teknologi yang digunakan (Rust + WebAssembly + Yew) menunjukkan bahwa bahasa sistem sekelas Rust pun dapat digunakan untuk membangun antarmuka web yang modern dan responsif, membuktikan bahwa batas antara *systems programming* dan *frontend development* semakin kabur di era WebAssembly.
