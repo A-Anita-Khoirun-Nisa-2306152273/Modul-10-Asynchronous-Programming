@@ -58,3 +58,73 @@ Secara default, server berjalan dan mendengarkan koneksi masuk pada port `2000`.
 
 ![alt text](assets/image3.png)
 ![alt text](assets/image4.png)
+
+### Eksperimen 2.2: Modifying Port
+#### Hasil Eksekusi Terminal
+#### Analisis dan Penjelasan
+
+Pada eksperimen ini, dilakukan modifikasi untuk mengubah port komunikasi WebSocket default yang semula berada pada port `2000` menjadi port baru yaitu `8080`. Karena arsitektur WebSocket melibatkan komunikasi dua arah antara penyedia layanan (*server*) dan pengguna (*client*), perubahan port wajib dilakukan pada kode sumber kedua komponen tersebut sekaligus.
+
+Pada berkas `src/bin/server.rs`, baris pengikatan alamat diubah:
+
+```rust
+let listener = TcpListener::bind("127.0.0.1:2000").await?;
+// Menjadi:
+let listener = TcpListener::bind("127.0.0.1:8080").await?;
+
+```
+
+Pada berkas `src/bin/client.rs`, baris inisialisasi URI tujuan diubah:
+
+```rust
+ClientBuilder::from_uri(http::Uri::from_static("ws://127.0.0.1:2000"))
+// Menjadi:
+ClientBuilder::from_uri(http::Uri::from_static("ws://127.0.0.1:8080"))
+
+```
+
+Kedua sisi harus menggunakan port yang identik agar jabat tangan (*handshake*) protokol WebSocket dapat terjalin dengan sukses. Jika terdapat ketidakcocokan konfigurasi port pada salah satu komponen, koneksi akan langsung gagal dan memicu eror `ConnectionRefused`. Protokol yang digunakan tetap berupa `ws://` (WebSocket standar). Setelah port diselaraskan menjadi `8080`, fungsionalitas pengiriman pesan real-time kembali berjalan normal tanpa kendala.
+
+![alt text](assets/image5.png)
+![alt text](assets/image6.png)
+
+### Eksperimen 2.3: Small Changes, Add IP and Port
+#### Hasil Eksekusi Terminal
+#### Analisis dan Penjelasan
+
+**1. Apa yang Diubah?**
+Modifikasi kecil dilakukan pada sisi server untuk meningkatkan transparansi informasi pesan. Jika sebelumnya server hanya meneruskan string teks mentah dari pengirim langsung ke seluruh client, sekarang server dikonfigurasi untuk menyisipkan informasi identitas berupa alamat IP (*IP Address*) dan nomor port asal dari client pengirim ke dalam setiap pesan yang disebarkan.
+
+**2. Lokasi Perubahan Kode**
+Perubahan diterapkan pada berkas `src/bin/server.rs` di dalam fungsi penanganan koneksi `handle_connection`.
+
+*Sebelum Diubah:*
+
+```rust
+if let Some(text) = msg.as_text() {
+    println!("From client {addr:?} {text:?}");
+    bcast_tx.send(text.to_string()).unwrap();
+}
+
+```
+
+*Sesudah Diubah:*
+
+```rust
+if let Some(text) = msg.as_text() {
+    println!("From client {addr:?} {text:?}");
+    bcast_tx.send(format!("From {addr}: {text}")).unwrap();
+}
+
+```
+
+Modifikasi memanfaatkan makro `format!` untuk menyatukan variabel alamat `addr` (bertipe `SocketAddr`) dengan isi teks pesan.
+
+**3. Mengapa Perubahan Dilakukan di Sisi Server?**
+Sebab hanya server yang memegang kendali penuh atas informasi metadata koneksi jaringan (`SocketAddr`) dari masing-masing klien yang masuk melalui fungsi `accept()`. Sisi client individu tidak memiliki akses informasi maupun interaksi langsung dengan client lainnya karena seluruh lalu lintas komunikasi dimediasi penuh oleh server pusat melalui broadcast channel. Oleh karena itu, penataan format informasi pengirim paling tepat diolah oleh server sebelum pesan disebarluaskan ke seluruh pelanggan (*subscribers*).
+
+**4. Alur Hasil Eksekusi Baru**
+Saat client mengirim pesan (misal: `"halo"`), server akan menangkapnya, mencetak log internal pada terminal server, lalu membungkusnya menjadi bentuk `From 127.0.0.1:PORT: halo`. Ketika pesan tersebut sampai di terminal seluruh klien, sistem akan mencetak teks dengan format penanda komputer pribadi: `Anita's Computer - From server: From 127.0.0.1:PORT: halo`. Hal ini membuat jalannya percakapan berkelompok menjadi lebih terstruktur dan tidak anonim.
+
+![alt text](assets/image7.png)
+![alt text](assets/image8.png)
